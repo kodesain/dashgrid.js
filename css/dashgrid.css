@@ -1,0 +1,35 @@
+.grid-item {
+    position: absolute;
+    display: block;
+    z-index: 1;
+    transition: all 0.3s;
+}
+.grid-item.drag {
+    opacity: 0.7;
+    filter: alpha(opacity=70);
+    transition: none;
+}
+.grid-item > .card {
+    cursor: pointer;
+    text-align: center;
+    height: 100%;
+}
+.grid-item > .resize {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-top: 5px;
+    margin-right: 10px;
+}
+.grid-hint {
+    position: absolute;
+    display: block;
+    z-index: -1;
+}
+.grid-hint.active {
+    border: 1px dashed #FFF;
+    border-radius: .25rem;
+    opacity: 0.3;
+    filter: alpha(opacity=30);
+    z-index: 2;
+}

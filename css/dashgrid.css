@@ -17,6 +17,6 @@
 .grid-hint.active {
     background: #FFF;
     z-index: 2;
-    opacity: 0.2;
-    filter: alpha(opacity=20);
+    opacity: 0.1;
+    filter: alpha(opacity=10);
 }

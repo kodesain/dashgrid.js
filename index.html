@@ -18,11 +18,18 @@
                 margin: 0;
                 padding: 0;
             }
-            #dashGrid {
-                height: 850px;
+            .grid-item > .card {
+                cursor: pointer;
+                text-align: center;
+                height: 100%;
+                border-radius: 0;
             }
-            .grid-item, .grid-hint {
-                padding: 5px;
+            .grid-item > .resize {
+                position: absolute;
+                top: 0;
+                right: 0;
+                margin-top: 5px;
+                margin-right: 10px;
             }
         </style>
 
@@ -44,6 +51,7 @@
                 <h1>DASHGRID.JS</h1>
                 <p class="lead">dashgrid.js is a jQuery - Kendo plugin for widget layout. This is drag-and-drop multi-column grid. It allows you to build draggable responsive bootstrap layouts.</p>
                 <h3>Built with love.</h3>
+                <p>http://kodesain.com</p>
             </div>
             <div id="dashGrid">
                 <div class="grid-item" data-id="A" data-row="1" data-col="0">
@@ -96,9 +104,6 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-            </div>
-            <div class="text-center">
-                http://kodesain.com
             </div>
         </div>
     </body>

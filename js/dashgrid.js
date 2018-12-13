@@ -1,9 +1,8 @@
 var dashGrid = function (el) {
     this.grid = el;
-    this.matrix = {row: 4, col: 4}
+    this.matrix = {row: 10, col: 4}
     this.width = 25;
     this.height = 200;
-    this.restore = false;
 
     this.prepare();
 };
@@ -29,7 +28,7 @@ dashGrid.prototype.prepare = function () {
 
     $(this.grid).css("position", "relative");
 
-    this.mapItem();
+    this.mapItems();
 };
 
 dashGrid.prototype.getStyle = function (el) {
@@ -51,7 +50,7 @@ dashGrid.prototype.getStyle = function (el) {
     return css;
 };
 
-dashGrid.prototype.mapItem = function () {
+dashGrid.prototype.mapItems = function () {
     var self = this;
 
     $(this.grid + " > .grid-item").each(function (i, e) {
@@ -78,55 +77,6 @@ dashGrid.prototype.dragItem = function () {
         "top": top,
         "left": left
     };
-};
-
-dashGrid.prototype.moveItem = function (el) {
-    var self = this;
-    var mode = (typeof $(el).attr("data-mode") !== "undefined") ? $(el).attr("data-mode") : "min";
-
-
-    if (mode == "max") {
-        var r = parseInt($(el).attr("data-row"));
-        var c = parseInt($(el).attr("data-col"));
-        var s = {};
-
-        var map = [];
-
-        map.push({"row": r, "col": c});
-        map.push({"row": r, "col": (c + 1)});
-        map.push({"row": (r + 1), "col": c});
-        map.push({"row": (r + 1), "col": (c + 1)});
-
-        $(map).each(function (i, v) {
-            $($(self.grid + " > .grid-item[data-row='" + v.row + "'][data-col='" + v.col + "']")).each(function (i, move) {
-                if ($(move).attr("data-id") != $(el).attr("data-id")) {
-                    r = v.row;
-                    s = self.getStyle(move);
-                    s.top = self.height * (r + 1);
-
-                    $(move).attr("data-row", (r + 1)).attr("data-x-row", r).css(s);
-                }
-            });
-        });
-    } else {
-        this.restore = true;
-    }
-
-    if (this.restore == true) {
-        $(this.grid + " > .grid-item").each(function (i, e) {
-            var x = $(e).attr("data-x-row");
-            var s = self.getStyle(e);
-
-            if (typeof x !== "undefined") {
-                s.top = self.height * x;
-
-                $(e).attr("data-row", x).css(s);
-                $(e).removeAttr("data-x-row");
-            }
-        });
-
-        this.restore = false;
-    }
 };
 
 dashGrid.prototype.resizeItem = function (el) {
@@ -178,6 +128,59 @@ dashGrid.prototype.resizeItem = function (el) {
     }
 
     $(el).css(style);
+};
+
+dashGrid.prototype.moveItem = function (el) {
+    var self = this;
+    var mode = (typeof $(el).attr("data-mode") !== "undefined") ? $(el).attr("data-mode") : "min";
+
+
+    if (mode == "max") {
+        var r = parseInt($(el).attr("data-row"));
+        var c = parseInt($(el).attr("data-col"));
+        var s = {};
+
+        var map = [];
+
+        map.push({"row": r, "col": c});
+        map.push({"row": r, "col": (c + 1)});
+        map.push({"row": (r + 1), "col": c});
+        map.push({"row": (r + 1), "col": (c + 1)});
+
+        $(map).each(function (i, v) {
+            $($(self.grid + " > .grid-item[data-row='" + v.row + "'][data-col='" + v.col + "']")).each(function (i, move) {
+                if ($(move).attr("data-id") != $(el).attr("data-id")) {
+                    r = parseInt($(move).attr("data-row"));
+                    s = self.getStyle(move);
+                    s.top = self.height * (r + 1);
+
+                    if (typeof $(move).attr("data-x-row") === "undefined") {
+                        $(move).attr("data-row", (r + 1)).attr("data-x-row", r).css(s);
+                    } else {
+                        $(move).attr("data-row", (r + 1)).css(s);
+                    }
+
+                    self.collision(move);
+                }
+            });
+        });
+    } else {
+        $(this.grid + " > .grid-item").each(function (i, e) {
+            var x = $(e).attr("data-x-row");
+            var s = self.getStyle(e);
+
+            if (typeof x !== "undefined") {
+                s.top = self.height * x;
+
+                $(e).attr("data-row", x).css(s);
+                $(e).removeAttr("data-x-row");
+            }
+        });
+    }
+};
+
+dashGrid.prototype.collision = function (el) {
+    console.log(el);
 };
 
 dashGrid.prototype.draggable = function () {
@@ -253,13 +256,13 @@ dashGrid.prototype.draggable = function () {
             $(drag).attr("data-row", row).attr("data-col", col).css(style);
             $(drag).removeAttr("data-x-col");
 
-            self.restore = true;
-            self.moveItem(drag);
-
             $("body > .grid-item").hide();
 
             $(self.grid + " > .grid-hint").removeClass("active");
+            $(self.grid + " > .grid-item").removeAttr("data-x-row");
             $(self.grid + " > .grid-item > .card").removeAttr("style");
+
+            self.moveItem(drag);
         }
     });
 

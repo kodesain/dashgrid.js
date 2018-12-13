@@ -180,7 +180,29 @@ dashGrid.prototype.moveItem = function (el) {
 };
 
 dashGrid.prototype.collision = function (el) {
-    console.log(el);
+    var self = this;
+
+    if (typeof $(el).attr("data-x-row") !== "undefined") {
+        var r = parseInt($(el).attr("data-row"));
+        var c = parseInt($(el).attr("data-col"));
+        var s = this.getStyle(el);
+
+        $($(this.grid + " > .grid-item[data-row='" + r + "'][data-col='" + c + "']")).each(function (i, move) {
+            if ($(move).attr("data-id") != $(el).attr("data-id")) {
+                r = parseInt($(move).attr("data-row"));
+                s = self.getStyle(move);
+                s.top = self.height * (r + 1);
+
+                if (typeof $(move).attr("data-x-row") === "undefined") {
+                    $(move).attr("data-row", (r + 1)).attr("data-x-row", r).css(s);
+                } else {
+                    $(move).attr("data-row", (r + 1)).css(s);
+                }
+
+                self.collision(move);
+            }
+        });
+    }
 };
 
 dashGrid.prototype.draggable = function () {
@@ -227,33 +249,38 @@ dashGrid.prototype.draggable = function () {
         },
         dragend: function (e) {
             var hint = $(self.grid + " > .grid-hint.active").get(0)
+            var hintStyle = self.getStyle(hint);
             var row = parseInt($(hint).attr("data-id").split(",")[0]);
             var col = parseInt($(hint).attr("data-id").split(",")[1]);
 
             var drag = e.currentTarget.get(0);
-            var drop = $(self.grid + " > .grid-item[data-row='" + row + "'][data-col='" + col + "']").get(0);
-            var mode = (typeof $(drag).attr("data-mode") !== "undefined") ? $(drag).attr("data-mode") : "min";
+            var dragStyle = self.getStyle(drag)
+            var dragMode = (typeof $(drag).attr("data-mode") !== "undefined") ? $(drag).attr("data-mode") : "min";
 
-            if (mode == "max") {
+            var drop = $(self.grid + " > .grid-item[data-row='" + row + "'][data-col='" + col + "']").get(0);
+            var dropStyle = self.getStyle(drop)
+            var dropMode = (typeof $(drop).attr("data-mode") !== "undefined") ? $(drop).attr("data-mode") : "min";
+
+            if (dragMode == "max") {
                 if (row == (self.matrix.row - 1) || col == (self.matrix.col - 1)) {
                     $(self.grid + " > .grid-hint").removeClass("active");
                     return false;
                 }
             }
 
-            var style = self.getStyle(hint);
-            var styleDrag = self.getStyle(drag)
-
-            style.width = styleDrag.width;
-            style.height = styleDrag.height;
+            hintStyle.width = dragStyle.width;
+            hintStyle.height = dragStyle.height;
 
             if (typeof drop !== "undefined") {
-                if (mode == "min") {
-                    $(drop).attr("data-row", $(drag).attr("data-row")).attr("data-col", $(drag).attr("data-col")).css(styleDrag);
+                if (dragMode == "min" || dragMode == dropMode) {
+                    dragStyle.width = dropStyle.width;
+                    dragStyle.height = dropStyle.height;
+
+                    $(drop).attr("data-row", $(drag).attr("data-row")).attr("data-col", $(drag).attr("data-col")).css(dragStyle);
                 }
             }
 
-            $(drag).attr("data-row", row).attr("data-col", col).css(style);
+            $(drag).attr("data-row", row).attr("data-col", col).css(hintStyle);
             $(drag).removeAttr("data-x-col");
 
             $("body > .grid-item").hide();
@@ -262,7 +289,9 @@ dashGrid.prototype.draggable = function () {
             $(self.grid + " > .grid-item").removeAttr("data-x-row");
             $(self.grid + " > .grid-item > .card").removeAttr("style");
 
-            self.moveItem(drag);
+            if (dragMode != dropMode) {
+                self.moveItem(drag);
+            }
         }
     });
 

@@ -1,20 +1,20 @@
-.grid-item {
+.dash-grid-item {
     position: absolute;
     display: block;
     z-index: 1;
     transition: all 0.3s;
 }
-.grid-item.drag {
+.dash-grid-item.drag {
     opacity: 0.7;
     filter: alpha(opacity=70);
     transition: none;
 }
-.grid-hint {
+.dash-grid-hint {
     position: absolute;
     display: block;
     z-index: -1;
 }
-.grid-hint.active {
+.dash-grid-hint.active {
     background: #FFF;
     z-index: 2;
     opacity: 0.1;

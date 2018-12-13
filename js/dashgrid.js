@@ -12,11 +12,11 @@ dashGrid.prototype.prepare = function () {
 
     for (r = 0; r < this.matrix.row; r++) {
         for (c = 0; c < this.matrix.col; c++) {
-            $(self.grid).append('<div class="grid-hint" data-id="' + r + "," + c + '"></div>');
+            $(self.grid).append('<div class="dash-grid-hint" data-id="' + r + "," + c + '"></div>');
         }
     }
 
-    $(this.grid + " > .grid-hint").each(function (i, e) {
+    $(this.grid + " > .dash-grid-hint").each(function (i, e) {
         var id = $(e).attr("data-id").split(",");
         var row = parseInt(id[0]);
         var col = parseInt(id[1]);
@@ -32,7 +32,7 @@ dashGrid.prototype.prepare = function () {
 };
 
 dashGrid.prototype.getStyle = function (el) {
-    var css = {}
+    var css = {};
 
     if (typeof el !== "undefined") {
         var style = $(el).attr("style");
@@ -52,19 +52,42 @@ dashGrid.prototype.getStyle = function (el) {
 
 dashGrid.prototype.mapItems = function () {
     var self = this;
+    var item = [];
 
-    $(this.grid + " > .grid-item").each(function (i, e) {
-        var r = parseInt($(e).attr("data-row"));
-        var c = parseInt($(e).attr("data-col"));
-        var s = self.getStyle(self.grid + " > .grid-hint[data-id='" + r + "," + c + "']");
+    $(this.grid + " > .dash-grid-item").each(function (i, e) {
+        if (typeof $(e).attr("data-row") === "undefined" || typeof $(e).attr("data-col") === "undefined") {
+            item.push($(e).attr("data-id"));
+        } else {
+            var r = parseInt($(e).attr("data-row"));
+            var c = parseInt($(e).attr("data-col"));
+            var s = self.getStyle(self.grid + " > .dash-grid-hint[data-id='" + r + "," + c + "']");
 
-        $(e).css(s);
+            $(e).css(s);
+        }
     });
+
+    var len = item.length;
+
+    if (len > 0) {
+        var r = 0, c = 0;
+
+        for (i = 0; i < len; i++) {
+            var s = self.getStyle(self.grid + " > .dash-grid-hint[data-id='" + r + "," + c + "']");
+
+            $(self.grid + " > .dash-grid-item[data-id='" + item[i] + "']").attr("data-row", r).attr("data-col", c).css(s);
+            c++;
+
+            if (i % this.matrix.col == (this.matrix.col - 1)) {
+                c = 0;
+                r++;
+            }
+        }
+    }
 };
 
 dashGrid.prototype.dragItem = function () {
-    var el = $("body > .grid-item");
-    var style = this.getStyle("body > .grid-item");
+    var el = $("body > .dash-grid-item");
+    var style = this.getStyle("body > .dash-grid-item");
     var top = parseInt(style.top) - $(this.grid).offset().top;
     var left = parseInt(style.left) - $(this.grid).offset().left;
 
@@ -148,7 +171,7 @@ dashGrid.prototype.moveItem = function (el) {
         map.push({"row": (r + 1), "col": (c + 1)});
 
         $(map).each(function (i, v) {
-            $($(self.grid + " > .grid-item[data-row='" + v.row + "'][data-col='" + v.col + "']")).each(function (i, move) {
+            $($(self.grid + " > .dash-grid-item[data-row='" + v.row + "'][data-col='" + v.col + "']")).each(function (i, move) {
                 if ($(move).attr("data-id") != $(el).attr("data-id")) {
                     r = parseInt($(move).attr("data-row"));
                     s = self.getStyle(move);
@@ -165,7 +188,7 @@ dashGrid.prototype.moveItem = function (el) {
             });
         });
     } else {
-        $(this.grid + " > .grid-item").each(function (i, e) {
+        $(this.grid + " > .dash-grid-item").each(function (i, e) {
             var x = $(e).attr("data-x-row");
             var s = self.getStyle(e);
 
@@ -187,7 +210,7 @@ dashGrid.prototype.collision = function (el) {
         var c = parseInt($(el).attr("data-col"));
         var s = this.getStyle(el);
 
-        $($(this.grid + " > .grid-item[data-row='" + r + "'][data-col='" + c + "']")).each(function (i, move) {
+        $($(this.grid + " > .dash-grid-item[data-row='" + r + "'][data-col='" + c + "']")).each(function (i, move) {
             if ($(move).attr("data-id") != $(el).attr("data-id")) {
                 r = parseInt($(move).attr("data-row"));
                 s = self.getStyle(move);
@@ -209,7 +232,7 @@ dashGrid.prototype.draggable = function () {
     var self = this;
 
     $(this.grid).kendoDraggable({
-        filter: ".grid-item",
+        filter: ".dash-grid-item",
         hint: function (element) {
             var w = $(element).width();
             var h = $(element).height();
@@ -221,7 +244,7 @@ dashGrid.prototype.draggable = function () {
         drag: function (e) {
             var drag = self.dragItem();
 
-            $(self.grid + " > .grid-hint").each(function (i, e) {
+            $(self.grid + " > .dash-grid-hint").each(function (i, e) {
                 var drop = self.getStyle(e);
 
                 if ((parseInt(drag.top) >= parseInt(drop.top) && parseInt(drag.top) <= (parseInt(drop.top) + 100))) {
@@ -230,16 +253,16 @@ dashGrid.prototype.draggable = function () {
                     var p = parseInt((l / w) * 100);
 
                     if (p <= parseInt(drop.left) + self.width) {
-                        $(self.grid + " > .grid-hint").removeClass("active");
-                        $(self.grid + " > .grid-hint[data-id='" + $(e).attr("data-id") + "']").addClass("active");
+                        $(self.grid + " > .dash-grid-hint").removeClass("active");
+                        $(self.grid + " > .dash-grid-hint[data-id='" + $(e).attr("data-id") + "']").addClass("active");
 
                         if (drag.mode == "max") {
                             var r = parseInt($(e).attr("data-id").split(",")[0]);
                             var c = parseInt($(e).attr("data-id").split(",")[1]);
 
-                            $(self.grid + " > .grid-hint[data-id='" + r + "," + (c + 1) + "']").addClass("active");
-                            $(self.grid + " > .grid-hint[data-id='" + (r + 1) + "," + c + "']").addClass("active");
-                            $(self.grid + " > .grid-hint[data-id='" + (r + 1) + "," + (c + 1) + "']").addClass("active");
+                            $(self.grid + " > .dash-grid-hint[data-id='" + r + "," + (c + 1) + "']").addClass("active");
+                            $(self.grid + " > .dash-grid-hint[data-id='" + (r + 1) + "," + c + "']").addClass("active");
+                            $(self.grid + " > .dash-grid-hint[data-id='" + (r + 1) + "," + (c + 1) + "']").addClass("active");
                         }
 
                         return false;
@@ -248,7 +271,7 @@ dashGrid.prototype.draggable = function () {
             });
         },
         dragend: function (e) {
-            var hint = $(self.grid + " > .grid-hint.active").get(0)
+            var hint = $(self.grid + " > .dash-grid-hint.active").get(0)
             var hintStyle = self.getStyle(hint);
             var row = parseInt($(hint).attr("data-id").split(",")[0]);
             var col = parseInt($(hint).attr("data-id").split(",")[1]);
@@ -257,13 +280,13 @@ dashGrid.prototype.draggable = function () {
             var dragStyle = self.getStyle(drag)
             var dragMode = (typeof $(drag).attr("data-mode") !== "undefined") ? $(drag).attr("data-mode") : "min";
 
-            var drop = $(self.grid + " > .grid-item[data-row='" + row + "'][data-col='" + col + "']").get(0);
+            var drop = $(self.grid + " > .dash-grid-item[data-row='" + row + "'][data-col='" + col + "']").get(0);
             var dropStyle = self.getStyle(drop)
             var dropMode = (typeof $(drop).attr("data-mode") !== "undefined") ? $(drop).attr("data-mode") : "min";
 
             if (dragMode == "max") {
                 if (row == (self.matrix.row - 1) || col == (self.matrix.col - 1)) {
-                    $(self.grid + " > .grid-hint").removeClass("active");
+                    $(self.grid + " > .dash-grid-hint").removeClass("active");
                     return false;
                 }
             }
@@ -283,11 +306,11 @@ dashGrid.prototype.draggable = function () {
             $(drag).attr("data-row", row).attr("data-col", col).css(hintStyle);
             $(drag).removeAttr("data-x-col");
 
-            $("body > .grid-item").hide();
+            $("body > .dash-grid-item").hide();
 
-            $(self.grid + " > .grid-hint").removeClass("active");
-            $(self.grid + " > .grid-item").removeAttr("data-x-row");
-            $(self.grid + " > .grid-item > .card").removeAttr("style");
+            $(self.grid + " > .dash-grid-hint").removeClass("active");
+            $(self.grid + " > .dash-grid-item").removeAttr("data-x-row");
+            $(self.grid + " > .dash-grid-item > .card").removeAttr("style");
 
             if (dragMode != dropMode) {
                 self.moveItem(drag);

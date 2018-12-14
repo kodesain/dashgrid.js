@@ -1,46 +1,125 @@
 var dashGrid = function (el) {
-    this.grid = el;
-    this.matrix = {row: 10, col: 4}
-    this.width = 25;
-    this.height = 200;
+    this.grid = $(el);
+    this.cols = 3
+    this.rows = parseInt(Math.ceil(this.gridItem().length / this.cols));
+    this.nodes = {};
+    this.item = {
+        width: (100 / this.cols),
+        height: 200
+    };
 
-    this.prepare();
-};
-
-dashGrid.prototype.prepare = function () {
-    var self = this;
-
-    for (r = 0; r < this.matrix.row; r++) {
-        for (c = 0; c < this.matrix.col; c++) {
-            $(self.grid).append('<div class="dash-grid-hint" data-id="' + r + "," + c + '"></div>');
-        }
-    }
-
-    $(this.grid + " > .dash-grid-hint").each(function (i, e) {
-        var id = $(e).attr("data-id").split(",");
-        var row = parseInt(id[0]);
-        var col = parseInt(id[1]);
-        var top = self.height * row;
-        var left = self.width * col;
-
-        $(e).css({"top": top, "left": left + "%", "width": self.width + "%", "height": self.height})
-    });
-
-    $(this.grid).css("position", "relative");
-
+    this.hintNodes();
     this.mapItems();
 };
 
-dashGrid.prototype.getStyle = function (el) {
+dashGrid.prototype.hintNodes = function (row) {
+    var last = (typeof row !== "undefined") ? row : this.rows;
+
+    for (r = 0; r < (last + 1); r++) {
+        for (c = 0; c < this.cols; c++) {
+            var top = this.item.height * r;
+            var left = this.item.width * c;
+
+            this.nodes[r + "," + c ] = {"top": top + "px", "left": left + "%", "width": this.item.width + "%", "height": this.item.height + "px"}
+        }
+    }
+
+    this.rows = last;
+
+    return this.nodes;
+};
+
+dashGrid.prototype.gridItem = function (attr) {
+    return $("#" + this.grid.get(0).id + " > .dash-grid-item" + (typeof attr !== "undefined" ? attr : ""));
+};
+
+dashGrid.prototype.gridHint = function (attr) {
+    return $("#" + this.grid.get(0).id + " > .dash-grid-hint" + (typeof attr !== "undefined" ? attr : ""));
+};
+
+dashGrid.prototype.mapItems = function () {
+    var self = this;
+    var exist = [], start_row = 0, start_col = 0;
+
+    this.gridItem().each(function (i, e) {
+        var data = self.getData(e);
+
+        if (typeof data.row === "undefined" || typeof data.col === "undefined") {
+            exist.push(data.id);
+        } else {
+            self.gridItem("[data-id='" + data.id + "']").css(self.nodes[data.row + "," + data.col]);
+            start_row = data.row;
+            start_col = data.col;
+        }
+    });
+
+    var i = 0;
+
+    for (r = 0; r < this.rows; r++) {
+        for (c = 0; c < this.cols; c++) {
+            if (typeof exist[i] !== "undefined") {
+                if (typeof this.gridItem("[data-row='" + r + "'][data-col='" + c + "']").get(0) === "undefined") {
+                    this.gridItem("[data-id='" + exist[i] + "']").attr("data-row", r).attr("data-col", c).css(this.nodes[r + "," + c ]);
+                    i++;
+                }
+            }
+        }
+    }
+
+    this.grid.css({"position": "relative", "height": (this.item.height * (this.rows + 1)) + "px"});
+    this.grid.append('<div class="dash-grid-hint"></div>');
+};
+
+dashGrid.prototype.resizeItem = function (el) {
+    var style = this.getStyles(el);
+    var attr = this.getAttributes(el);
+    var mode = (typeof attr["data-mode"] !== "undefined") ? attr["data-mode"] : "min";
+
+    if (mode == "min") {
+        mode = "max";
+        style.width = (parseInt(style.width) * 2) + "%";
+        style.height = (parseInt(style.height) * 2) + "px";
+
+        if (parseInt(attr["data-col"]) == (this.cols - 1)) {
+            $(el).attr("data-col", (this.cols - 2));
+            $(el).attr("data-x-col", (this.cols - 1));
+
+            style.left = this.item.width * (this.cols - 2) + "%";
+        }
+    } else {
+        mode = "min";
+        style.width = (parseInt(style.width) / 2) + "%";
+        style.height = (parseInt(style.height) / 2) + "px";
+
+        if (typeof attr["data-x-col"] !== "undefined") {
+            $(el).attr("data-col", $(el).attr("data-x-col"));
+            $(el).removeAttr("data-x-col");
+
+            style.left = this.item.width * (this.cols - 1) + "%";
+        }
+    }
+
+    $(el).attr("data-mode", mode).css(style);
+};
+
+dashGrid.prototype.getData = function (el) {
+    var data = {};
+
+    if (typeof el !== "undefined") {
+        data = $(el).data();
+    }
+
+    return data;
+};
+
+dashGrid.prototype.getStyles = function (el) {
     var css = {};
 
     if (typeof el !== "undefined") {
-        var style = $(el).attr("style");
-
-        $(style.split(";")).each(function (i, item) {
-            if (item.trim() != "") {
-                var p = item.trim().split(":")[0].trim();
-                var v = item.trim().split(":")[1].trim();
+        $.each($(el).attr("style").split(";"), function (key, value) {
+            if (value.trim() != "") {
+                var p = value.trim().split(":")[0].trim();
+                var v = value.trim().split(":")[1].trim();
 
                 css[p] = v;
             }
@@ -50,278 +129,90 @@ dashGrid.prototype.getStyle = function (el) {
     return css;
 };
 
-dashGrid.prototype.mapItems = function () {
-    var self = this;
-    var item = [];
+dashGrid.prototype.getAttributes = function (el) {
+    var attr = {};
 
-    $(this.grid + " > .dash-grid-item").each(function (i, e) {
-        if (typeof $(e).attr("data-row") === "undefined" || typeof $(e).attr("data-col") === "undefined") {
-            item.push($(e).attr("data-id"));
-        } else {
-            var r = parseInt($(e).attr("data-row"));
-            var c = parseInt($(e).attr("data-col"));
-            var s = self.getStyle(self.grid + " > .dash-grid-hint[data-id='" + r + "," + c + "']");
-
-            $(e).css(s);
-        }
-    });
-
-    var len = item.length;
-
-    if (len > 0) {
-        var r = 0, c = 0;
-
-        for (i = 0; i < len; i++) {
-            var s = self.getStyle(self.grid + " > .dash-grid-hint[data-id='" + r + "," + c + "']");
-
-            $(self.grid + " > .dash-grid-item[data-id='" + item[i] + "']").attr("data-row", r).attr("data-col", c).css(s);
-            c++;
-
-            if (i % this.matrix.col == (this.matrix.col - 1)) {
-                c = 0;
-                r++;
-            }
-        }
-    }
-};
-
-dashGrid.prototype.dragItem = function () {
-    var el = $("body > .dash-grid-item");
-    var style = this.getStyle("body > .dash-grid-item");
-    var top = parseInt(style.top) - $(this.grid).offset().top;
-    var left = parseInt(style.left) - $(this.grid).offset().left;
-
-    return {
-        "id": $(el).attr("data-id"),
-        "mode": $(el).attr("data-mode"),
-        "row": parseInt($(el).attr("data-row")),
-        "col": parseInt($(el).attr("data-col")),
-        "style": style,
-        "top": top,
-        "left": left
-    };
-};
-
-dashGrid.prototype.resizeItem = function (el) {
-    var mode = (typeof $(el).attr("data-mode") !== "undefined") ? $(el).attr("data-mode") : "min";
-    var style = this.getStyle(el);
-
-    if (mode == "max") {
-        $(el).attr("data-mode", "min");
-    } else {
-        $(el).attr("data-mode", "max");
-    }
-
-    if ($(el).attr("data-mode") == "max") {
-        style.width = parseInt(style.width) * 2 + "%";
-        style.height = parseInt(style.height) * 2 + "px";
-
-        if ($(el).attr("data-row") == (this.matrix.row - 1)) {
-            $(el).attr("data-row", (this.matrix.row - 2));
-            $(el).attr("data-x-row", (this.matrix.row - 1));
-
-            style.top = this.height * (this.matrix.row - 2) + "px";
-        }
-
-        if ($(el).attr("data-col") == (this.matrix.col - 1)) {
-            $(el).attr("data-col", (this.matrix.col - 2));
-            $(el).attr("data-x-col", (this.matrix.col - 1));
-
-            style.left = this.width * (this.matrix.col - 2) + "%";
-        }
-    }
-
-    if ($(el).attr("data-mode") == "min") {
-        style.width = parseInt(style.width) / 2 + "%";
-        style.height = parseInt(style.height) / 2 + "px";
-
-        if (typeof $(el).attr("data-x-row") !== "undefined") {
-            $(el).attr("data-row", $(el).attr("data-x-row"));
-            $(el).removeAttr("data-x-row");
-
-            style.top = this.height * (this.matrix.row - 1) + "px";
-        }
-
-        if (typeof $(el).attr("data-x-col") !== "undefined") {
-            $(el).attr("data-col", $(el).attr("data-x-col"));
-            $(el).removeAttr("data-x-col");
-
-            style.left = this.width * (this.matrix.col - 1) + "%";
-        }
-    }
-
-    $(el).css(style);
-};
-
-dashGrid.prototype.moveItem = function (el) {
-    var self = this;
-    var mode = (typeof $(el).attr("data-mode") !== "undefined") ? $(el).attr("data-mode") : "min";
-
-
-    if (mode == "max") {
-        var r = parseInt($(el).attr("data-row"));
-        var c = parseInt($(el).attr("data-col"));
-        var s = {};
-
-        var map = [];
-
-        map.push({"row": r, "col": c});
-        map.push({"row": r, "col": (c + 1)});
-        map.push({"row": (r + 1), "col": c});
-        map.push({"row": (r + 1), "col": (c + 1)});
-
-        $(map).each(function (i, v) {
-            $($(self.grid + " > .dash-grid-item[data-row='" + v.row + "'][data-col='" + v.col + "']")).each(function (i, move) {
-                if ($(move).attr("data-id") != $(el).attr("data-id")) {
-                    r = parseInt($(move).attr("data-row"));
-                    s = self.getStyle(move);
-                    s.top = self.height * (r + 1);
-
-                    if (typeof $(move).attr("data-x-row") === "undefined") {
-                        $(move).attr("data-row", (r + 1)).attr("data-x-row", r).css(s);
-                    } else {
-                        $(move).attr("data-row", (r + 1)).css(s);
-                    }
-
-                    self.collision(move);
-                }
-            });
-        });
-    } else {
-        $(this.grid + " > .dash-grid-item").each(function (i, e) {
-            var x = $(e).attr("data-x-row");
-            var s = self.getStyle(e);
-
-            if (typeof x !== "undefined") {
-                s.top = self.height * x;
-
-                $(e).attr("data-row", x).css(s);
-                $(e).removeAttr("data-x-row");
-            }
+    if (typeof el !== "undefined") {
+        $.each($(el)[0].attributes, function (index, attribute) {
+            attr[attribute.name] = attribute.value;
         });
     }
-};
 
-dashGrid.prototype.collision = function (el) {
-    var self = this;
-
-    if (typeof $(el).attr("data-x-row") !== "undefined") {
-        var r = parseInt($(el).attr("data-row"));
-        var c = parseInt($(el).attr("data-col"));
-        var s = this.getStyle(el);
-
-        $($(this.grid + " > .dash-grid-item[data-row='" + r + "'][data-col='" + c + "']")).each(function (i, move) {
-            if ($(move).attr("data-id") != $(el).attr("data-id")) {
-                r = parseInt($(move).attr("data-row"));
-                s = self.getStyle(move);
-                s.top = self.height * (r + 1);
-
-                if (typeof $(move).attr("data-x-row") === "undefined") {
-                    $(move).attr("data-row", (r + 1)).attr("data-x-row", r).css(s);
-                } else {
-                    $(move).attr("data-row", (r + 1)).css(s);
-                }
-
-                self.collision(move);
-            }
-        });
-    }
-};
+    return attr;
+}
 
 dashGrid.prototype.draggable = function () {
     var self = this;
 
-    $(this.grid).kendoDraggable({
+    this.grid.kendoDraggable({
         filter: ".dash-grid-item",
         hint: function (element) {
             var w = $(element).width();
             var h = $(element).height();
 
-            $(element).find(".card").css({"width": w, "height": h});
-
             return element.clone().addClass("drag").css({"width": w, "height": h});
         },
         drag: function (e) {
-            var drag = self.dragItem();
+            var drag = $(".dash-grid-item.drag").get(0);
+            var dragData = self.getData(drag);
+            var dragStyles = self.getStyles(drag);
+            var dragY = (parseInt(dragStyles.top) - self.grid.offset().top) + e.offsetY;
+            var dragX = (parseInt(dragStyles.left) - self.grid.offset().left) + e.offsetX;
+            var dragTop = parseInt(dragY);
+            var dragLeft = parseInt((dragX / self.grid.width()) * 100);
 
-            $(self.grid + " > .dash-grid-hint").each(function (i, e) {
-                var drop = self.getStyle(e);
+            $.each(self.nodes, function (key, node) {
+                if ((parseInt(dragTop) >= parseInt(node.top) && parseInt(dragTop) <= (parseInt(node.top) + parseInt(node.height)))) {
+                    if ((parseInt(dragLeft) >= parseInt(node.left) && parseInt(dragLeft) <= (parseInt(node.left) + parseInt(node.width)))) {
+                        var r = parseInt(key.split(",")[0]);
+                        var c = parseInt(key.split(",")[1]);
 
-                if ((parseInt(drag.top) >= parseInt(drop.top) && parseInt(drag.top) <= (parseInt(drop.top) + 100))) {
-                    var w = $(self.grid).width();
-                    var l = parseInt(drag.left);
-                    var p = parseInt((l / w) * 100);
-
-                    if (p <= parseInt(drop.left) + self.width) {
-                        $(self.grid + " > .dash-grid-hint").removeClass("active");
-                        $(self.grid + " > .dash-grid-hint[data-id='" + $(e).attr("data-id") + "']").addClass("active");
-
-                        if (drag.mode == "max") {
-                            var r = parseInt($(e).attr("data-id").split(",")[0]);
-                            var c = parseInt($(e).attr("data-id").split(",")[1]);
-
-                            $(self.grid + " > .dash-grid-hint[data-id='" + r + "," + (c + 1) + "']").addClass("active");
-                            $(self.grid + " > .dash-grid-hint[data-id='" + (r + 1) + "," + c + "']").addClass("active");
-                            $(self.grid + " > .dash-grid-hint[data-id='" + (r + 1) + "," + (c + 1) + "']").addClass("active");
-                        }
-
-                        return false;
+                        self.gridHint().attr("data-row", r).attr("data-col", c).css(node);
                     }
                 }
             });
         },
         dragend: function (e) {
-            var hint = $(self.grid + " > .dash-grid-hint.active").get(0)
-            var hintStyle = self.getStyle(hint);
-            var row = parseInt($(hint).attr("data-id").split(",")[0]);
-            var col = parseInt($(hint).attr("data-id").split(",")[1]);
+            var hint = self.gridHint().get(0);
+            var hintAttr = self.getAttributes(hint);
+            var hintStyles = self.getStyles(hint);
+            var hintRow = parseInt(hintAttr["data-row"]);
+            var hintCol = parseInt(hintAttr["data-col"]);
+            var hintMode = hintAttr["data-mode"];
 
             var drag = e.currentTarget.get(0);
-            var dragStyle = self.getStyle(drag)
-            var dragMode = (typeof $(drag).attr("data-mode") !== "undefined") ? $(drag).attr("data-mode") : "min";
+            var dragAttr = self.getAttributes(drag);
+            var dragStyles = self.getStyles(drag);
+            var dragRow = parseInt(dragAttr["data-row"]);
+            var dragCol = parseInt(dragAttr["data-col"]);
+            var dragMode = dragAttr["data-mode"];
 
-            var drop = $(self.grid + " > .dash-grid-item[data-row='" + row + "'][data-col='" + col + "']").get(0);
-            var dropStyle = self.getStyle(drop)
-            var dropMode = (typeof $(drop).attr("data-mode") !== "undefined") ? $(drop).attr("data-mode") : "min";
-
-            if (dragMode == "max") {
-                if (row == (self.matrix.row - 1) || col == (self.matrix.col - 1)) {
-                    $(self.grid + " > .dash-grid-hint").removeClass("active");
-                    return false;
-                }
-            }
-
-            hintStyle.width = dragStyle.width;
-            hintStyle.height = dragStyle.height;
+            var drop = self.gridItem("[data-row='" + hintRow + "'][data-col='" + hintCol + "']").get(0);
+            var dropAttr = self.getAttributes(drop);
+            var dropStyles = self.getStyles(drop);
+            var dropRow = parseInt(dropAttr["data-row"]);
+            var dropCol = parseInt(dropAttr["data-col"]);
+            var dropMode = dropAttr["data-mode"];
 
             if (typeof drop !== "undefined") {
-                if (dragMode == "min" || dragMode == dropMode) {
-                    dragStyle.width = dropStyle.width;
-                    dragStyle.height = dropStyle.height;
-
-                    $(drop).attr("data-row", $(drag).attr("data-row")).attr("data-col", $(drag).attr("data-col")).css(dragStyle);
-                }
+                $(drop).attr("data-row", dragRow).attr("data-col", dragCol).css(dragStyles);
             }
 
-            $(drag).attr("data-row", row).attr("data-col", col).css(hintStyle);
-            $(drag).removeAttr("data-x-col");
+            $(drag).attr("data-row", hintRow).attr("data-col", hintCol).css(hintStyles);
 
-            $("body > .dash-grid-item").hide();
-
-            $(self.grid + " > .dash-grid-hint").removeClass("active");
-            $(self.grid + " > .dash-grid-item").removeAttr("data-x-row");
-            $(self.grid + " > .dash-grid-item > .card").removeAttr("style");
-
-            if (dragMode != dropMode) {
-                self.moveItem(drag);
+            if (hintRow === self.rows) {
+                self.hintNodes(hintRow + 1);
+                self.grid.css({"position": "relative", "height": (self.item.height * (self.rows + 1)) + "px"});
             }
+
+            self.gridHint().removeAttr("style");
+            $(".dash-grid-item.drag").hide();
         }
     });
 
-    $(this.grid).on("click", ".resize", function (e) {
+    this.grid.on("click", ".resize", function (e) {
         var el = $(e.currentTarget).parent().get(0);
 
         self.resizeItem(el);
-        self.moveItem(el);
     });
 };

@@ -12,8 +12,8 @@
 .dash-grid-hint {
     position: absolute;
     display: block;
-    background: pink;
+    border: 1px dotted white;
     z-index: 999;
-    opacity: 0.3;
-    filter: alpha(opacity=30);
+    opacity: 0.5;
+    filter: alpha(opacity=50);
 }

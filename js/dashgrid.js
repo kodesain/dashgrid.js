@@ -161,21 +161,21 @@ dashGrid.prototype.draggable = function () {
             var hintStyles = self.getStyles(hint);
             var hintRow = parseFloat(hintAttr["data-row"]);
             var hintCol = parseFloat(hintAttr["data-col"]);
-            var hintMode = hintAttr["data-mode"];
+            var hintMode = (typeof hintAttr["data-mode"] !== "undefined") ? hintAttr["data-mode"] : "min";
 
             var drag = e.currentTarget.get(0);
             var dragAttr = self.getAttributes(drag);
             var dragStyles = self.getStyles(drag);
             var dragRow = parseFloat(dragAttr["data-row"]);
             var dragCol = parseFloat(dragAttr["data-col"]);
-            var dragMode = dragAttr["data-mode"];
+            var dragMode = (typeof dragAttr["data-mode"] !== "undefined") ? dragAttr["data-mode"] : "min";
 
             var drop = self.gridItem("[data-row='" + hintRow + "'][data-col='" + hintCol + "']").get(0);
             var dropAttr = self.getAttributes(drop);
             var dropStyles = self.getStyles(drop);
             var dropRow = parseFloat(dropAttr["data-row"]);
             var dropCol = parseFloat(dropAttr["data-col"]);
-            var dropMode = dropAttr["data-mode"];
+            var dropMode = (typeof dropAttr["data-mode"] !== "undefined") ? dropAttr["data-mode"] : "min";
 
             if (dragMode == "max" && hintCol >= (self.cols - 1)) {
                 self.gridHint().removeAttr("style");
@@ -280,6 +280,7 @@ dashGrid.prototype.collision = function (el) {
             this.gridItem("[data-row='" + r + "'][data-col='" + c + "']").each(function (i, e) {
                 var other = self.getAttributes(e);
                 var otherStyles = self.getStyles(e);
+                var otherMode = (typeof other["data-mode"] !== "undefined") ? other["data-mode"] : "min";
 
                 if (other["data-id"] != main["data-id"]) {
                     if ((parseFloat(otherStyles.top) >= parseFloat(mainStyles.top) && parseFloat(otherStyles.top) < (parseFloat(mainStyles.top) + parseFloat(mainStyles.height)))) {
@@ -302,6 +303,72 @@ dashGrid.prototype.collision = function (el) {
 
                             if (row === self.rows) {
                                 self.hintNodes(row + 1);
+                            }
+                        }
+                    }
+
+                    if (((parseFloat(otherStyles.top) + self.item.height) >= parseFloat(mainStyles.top) && (parseFloat(otherStyles.top) + self.item.height) < (parseFloat(mainStyles.top) + parseFloat(mainStyles.height)))) {
+                        if ((parseFloat(otherStyles.left) >= parseFloat(mainStyles.left) && parseFloat(otherStyles.left) < (parseFloat(mainStyles.left) + parseFloat(mainStyles.width)))) {
+                            if (otherMode == "max" && mainMode == "max") {
+                                var row = parseFloat(other["data-row"]) + 3;
+
+                                otherStyles.top = self.item.height * row;
+
+                                if (typeof other["data-x-row"] !== "undefined") {
+                                    $(e).attr("data-row", row).css(otherStyles);
+                                } else {
+                                    $(e).attr("data-row", row).attr("data-x-row", parseFloat(other["data-row"])).css(otherStyles);
+                                }
+
+                                ee.push($(e));
+
+                                if (row === self.rows) {
+                                    self.hintNodes(row + 1);
+                                }
+                            }
+                        }
+                    }
+
+                    if ((parseFloat(otherStyles.top) >= parseFloat(mainStyles.top) && parseFloat(otherStyles.top) < (parseFloat(mainStyles.top) + parseFloat(mainStyles.height)))) {
+                        if (((parseFloat(otherStyles.left) + self.item.width) >= parseFloat(mainStyles.left) && (parseFloat(otherStyles.left) + self.item.width) < (parseFloat(mainStyles.left) + parseFloat(mainStyles.width)))) {
+                            if (otherMode == "max" && mainMode == "max") {
+                                var row = parseFloat(other["data-row"]) + 2;
+
+                                otherStyles.top = self.item.height * row;
+
+                                if (typeof other["data-x-row"] !== "undefined") {
+                                    $(e).attr("data-row", row).css(otherStyles);
+                                } else {
+                                    $(e).attr("data-row", row).attr("data-x-row", parseFloat(other["data-row"])).css(otherStyles);
+                                }
+
+                                ee.push($(e));
+
+                                if (row === self.rows) {
+                                    self.hintNodes(row + 1);
+                                }
+                            }
+                        }
+                    }
+
+                    if (((parseFloat(otherStyles.top) + self.item.height) >= parseFloat(mainStyles.top) && (parseFloat(otherStyles.top) + self.item.height) < (parseFloat(mainStyles.top) + parseFloat(mainStyles.height)))) {
+                        if (((parseFloat(otherStyles.left) + self.item.width) >= parseFloat(mainStyles.left) && (parseFloat(otherStyles.left) + self.item.width) < (parseFloat(mainStyles.left) + parseFloat(mainStyles.width)))) {
+                            if (otherMode == "max" && mainMode == "max") {
+                                var row = parseFloat(other["data-row"]) + 3;
+
+                                otherStyles.top = self.item.height * row;
+
+                                if (typeof other["data-x-row"] !== "undefined") {
+                                    $(e).attr("data-row", row).css(otherStyles);
+                                } else {
+                                    $(e).attr("data-row", row).attr("data-x-row", parseFloat(other["data-row"])).css(otherStyles);
+                                }
+
+                                ee.push($(e));
+
+                                if (row === self.rows) {
+                                    self.hintNodes(row + 1);
+                                }
                             }
                         }
                     }

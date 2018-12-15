@@ -145,6 +145,9 @@ dashGrid.prototype.draggable = function () {
                         if (dragMode == "max") {
                             node.width = (self.item.width * 2) + "%";
                             node.height = (self.item.height * 2) + "px";
+                        } else {
+                            node.width = (self.item.width * 1) + "%";
+                            node.height = (self.item.height * 1) + "px";
                         }
 
                         self.gridHint().attr("data-row", r).attr("data-col", c).css(node);
@@ -174,13 +177,26 @@ dashGrid.prototype.draggable = function () {
             var dropCol = parseFloat(dropAttr["data-col"]);
             var dropMode = dropAttr["data-mode"];
 
-            //if (dragMode == dropMode) {
+            if (dragMode == "max" && hintCol >= (self.cols - 1)) {
+                self.gridHint().removeAttr("style");
+                return false;
+            }
+
             $(drag).attr("data-row", hintRow).attr("data-col", hintCol).css(hintStyles);
-            //}
 
             if (typeof drop !== "undefined") {
                 if (dragMode == dropMode) {
                     $(drop).attr("data-row", dragRow).attr("data-col", dragCol).css(dragStyles);
+                }
+            } else {
+                if (dragMode !== "max") {
+                    self.clearStack(drag);
+                    self.gridHint().removeAttr("style");
+                }
+
+                if (dragMode === "max" && dragCol > hintCol) {
+                    self.clearStack(drag);
+                    self.gridHint().removeAttr("style");
                 }
             }
 
@@ -301,4 +317,39 @@ dashGrid.prototype.collision = function (el) {
     $(ee).each(function (i, e) {
         self.collision(e);
     });
+};
+
+dashGrid.prototype.clearStack = function (el) {
+    var self = this;
+    var main = this.getAttributes(el);
+    var mainStyles = this.getStyles(el);
+    var mainMode = (typeof main["data-mode"] !== "undefined") ? main["data-mode"] : "min";
+
+    for (var r = 0; r < this.rows; r++) {
+        for (var c = 0; c < this.cols; c++) {
+            this.gridItem("[data-row='" + r + "'][data-col='" + c + "']").each(function (i, e) {
+                var other = self.getAttributes(e);
+                var otherStyles = self.getStyles(e);
+                var otherMode = (typeof other["data-mode"] !== "undefined") ? other["data-mode"] : "min";
+
+                if (otherMode == "max") {
+                    if ((parseFloat(mainStyles.top) >= parseFloat(otherStyles.top) && parseFloat(mainStyles.top) < (parseFloat(otherStyles.top) + parseFloat(otherStyles.height)))) {
+                        if ((parseFloat(mainStyles.left) >= parseFloat(otherStyles.left) && parseFloat(mainStyles.left) < (parseFloat(otherStyles.left) + parseFloat(otherStyles.width)))) {
+                            var row = parseFloat(main["data-row"]) + 1;
+
+                            if (mainMode == "max" || parseFloat(main["data-row"]) == parseFloat(other["data-row"])) {
+                                row = parseFloat(main["data-row"]) + 2;
+                            }
+
+                            mainStyles.top = self.item.height * row;
+
+                            $(el).attr("data-row", row).css(mainStyles);
+
+                            self.collision(el);
+                        }
+                    }
+                }
+            });
+        }
+    }
 };

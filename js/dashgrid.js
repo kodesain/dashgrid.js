@@ -113,7 +113,7 @@ dashGrid.prototype.getAttributes = function (el) {
     }
 
     return attr;
-}
+};
 
 dashGrid.prototype.draggable = function () {
     var self = this;
@@ -189,14 +189,10 @@ dashGrid.prototype.draggable = function () {
                     $(drop).attr("data-row", dragRow).attr("data-col", dragCol).css(dragStyles);
                 }
             } else {
-                if (dragMode !== "max") {
-                    self.clearStack(drag);
+                if (self.checkStack(drag) == true) {
+                    $(drag).attr("data-row", dragRow).attr("data-col", dragCol).css(dragStyles);
                     self.gridHint().removeAttr("style");
-                }
-
-                if (dragMode === "max" && dragCol > hintCol) {
-                    self.clearStack(drag);
-                    self.gridHint().removeAttr("style");
+                    return false;
                 }
             }
 
@@ -319,11 +315,13 @@ dashGrid.prototype.collision = function (el) {
     });
 };
 
-dashGrid.prototype.clearStack = function (el) {
+dashGrid.prototype.checkStack = function (el) {
     var self = this;
     var main = this.getAttributes(el);
     var mainStyles = this.getStyles(el);
     var mainMode = (typeof main["data-mode"] !== "undefined") ? main["data-mode"] : "min";
+
+    var stack = false;
 
     for (var r = 0; r < this.rows; r++) {
         for (var c = 0; c < this.cols; c++) {
@@ -332,24 +330,16 @@ dashGrid.prototype.clearStack = function (el) {
                 var otherStyles = self.getStyles(e);
                 var otherMode = (typeof other["data-mode"] !== "undefined") ? other["data-mode"] : "min";
 
-                if (otherMode == "max") {
+                if (otherMode == "max" && other["data-id"] != main["data-id"]) {
                     if ((parseFloat(mainStyles.top) >= parseFloat(otherStyles.top) && parseFloat(mainStyles.top) < (parseFloat(otherStyles.top) + parseFloat(otherStyles.height)))) {
                         if ((parseFloat(mainStyles.left) >= parseFloat(otherStyles.left) && parseFloat(mainStyles.left) < (parseFloat(otherStyles.left) + parseFloat(otherStyles.width)))) {
-                            var row = parseFloat(main["data-row"]) + 1;
-
-                            if (mainMode == "max" || parseFloat(main["data-row"]) == parseFloat(other["data-row"])) {
-                                row = parseFloat(main["data-row"]) + 2;
-                            }
-
-                            mainStyles.top = self.item.height * row;
-
-                            $(el).attr("data-row", row).css(mainStyles);
-
-                            self.collision(el);
+                            stack = true;
                         }
                     }
                 }
             });
         }
     }
+
+    return stack;
 };

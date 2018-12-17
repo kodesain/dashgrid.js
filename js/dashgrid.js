@@ -398,6 +398,7 @@ dashGrid.prototype.collision = function (el) {
 
     $(ee).each(function (i, e) {
         self.collision(e);
+        self.hintNodes();
     });
 };
 

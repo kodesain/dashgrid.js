@@ -54,8 +54,16 @@
         <script src="js/dashgrid.js"></script>
         <script type="text/javascript">
             $(document).ready(function () {
-                grid = new dashGrid("#dashGrid");
-                grid.draggable();
+                $("#dashGrid").dashGrid({
+                    cols: 3,
+                    height: 300,
+                    drag: function (e) {
+                        console.log(e);
+                    },
+                    resize: function (e) {
+                        console.log(e);
+                    }
+                });
             });
         </script>
     </head>
@@ -113,7 +121,7 @@
                         <i class="material-icons min">fullscreen_exit</i>
                     </div>
                 </div>
-                <div class="dash-grid-item" data-id="E" data-mode="min">
+                <div class="dash-grid-item" data-id="E">
                     <div class="card">
                         <div class="card-body text-dark">
                             <h1 class="p-5">E</h1>
@@ -124,10 +132,10 @@
                         <i class="material-icons min">fullscreen_exit</i>
                     </div>
                 </div>
-                <div class="dash-grid-item" data-id="AA">
+                <div class="dash-grid-item" data-id="F">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">AA</h1>
+                            <h1 class="p-5">F</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -135,10 +143,10 @@
                         <i class="material-icons min">fullscreen_exit</i>
                     </div>
                 </div>
-                <div class="dash-grid-item" data-id="BB">
+                <div class="dash-grid-item" data-id="G">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">BB</h1>
+                            <h1 class="p-5">G</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -146,10 +154,10 @@
                         <i class="material-icons min">fullscreen_exit</i>
                     </div>
                 </div>
-                <div class="dash-grid-item" data-id="CC">
+                <div class="dash-grid-item" data-id="H">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">CC</h1>
+                            <h1 class="p-5">H</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -157,10 +165,10 @@
                         <i class="material-icons min">fullscreen_exit</i>
                     </div>
                 </div>
-                <div class="dash-grid-item" data-id="DD">
+                <div class="dash-grid-item" data-id="I">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">DD</h1>
+                            <h1 class="p-5">I</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -168,10 +176,10 @@
                         <i class="material-icons min">fullscreen_exit</i>
                     </div>
                 </div>
-                <div class="dash-grid-item" data-id="EE">
+                <div class="dash-grid-item" data-id="J">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">EE</h1>
+                            <h1 class="p-5">J</h1>
                         </div>
                     </div>
                     <div class="resize">

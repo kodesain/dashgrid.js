@@ -1,18 +1,30 @@
 "use strict";
 
-var dashGrid = function (el) {
+var dashGrid = function (el, opts) {
+    var self = this;
+
+    if (typeof opts === "undefined") {
+        opts = {};
+    }
+
     this.grid = $(el);
-    this.cols = 4;
+    this.cols = (typeof opts.cols !== "undefined" ? opts.cols : 4);
     this.rows = parseInt(Math.ceil(this.gridItem().length / this.cols));
     this.nodes = {};
     this.item = {
         width: (100 / this.cols),
-        height: 200
+        height: (typeof opts.height !== "undefined" ? opts.height : 200)
     };
     this.lastMax = null;
 
     this.hintNodes();
     this.mapItems();
+    this.draggable(function (e) {
+        opts[e.type]({
+            item: e.item,
+            other: self.gridItem()
+        });
+    });
 };
 
 dashGrid.prototype.hintNodes = function () {
@@ -58,7 +70,7 @@ dashGrid.prototype.gridHint = function (attr) {
 
 dashGrid.prototype.mapItems = function () {
     var self = this;
-    var exist = [], start_row = 0, start_col = 0;
+    var exist = [];
 
     this.gridItem().each(function (i, e) {
         var data = self.getData(e);
@@ -67,8 +79,6 @@ dashGrid.prototype.mapItems = function () {
             exist.push(data.id);
         } else {
             self.gridItem("[data-id='" + data.id + "']").css(self.nodes[data.row + "," + data.col]);
-            start_row = data.row;
-            start_col = data.col;
         }
     });
 
@@ -127,7 +137,7 @@ dashGrid.prototype.getAttributes = function (el) {
     return attr;
 };
 
-dashGrid.prototype.getItems = function () {
+dashGrid.prototype.dataItems = function () {
     var self = this;
     var item = [];
 
@@ -145,7 +155,7 @@ dashGrid.prototype.getItems = function () {
     return item;
 };
 
-dashGrid.prototype.draggable = function () {
+dashGrid.prototype.draggable = function (callback) {
     var self = this;
 
     this.grid.kendoDraggable({
@@ -231,6 +241,11 @@ dashGrid.prototype.draggable = function () {
             self.gridHint().removeAttr("style");
 
             $(".dash-grid-item.drag").hide();
+
+            callback({
+                type: "drag",
+                item: drag
+            });
         }
     });
 
@@ -239,6 +254,11 @@ dashGrid.prototype.draggable = function () {
 
         self.resizable(el);
         self.hintNodes();
+
+        callback({
+            type: "resize",
+            item: el
+        });
     });
 };
 
@@ -429,4 +449,12 @@ dashGrid.prototype.checkStack = function (el) {
     }
 
     return stack;
+};
+
+$.fn.dashGrid = function (opts) {
+    return this.each(function () {
+        if (!$(this).data("dashGrid")) {
+            $(this).data("dashGrid", new dashGrid(this, opts));
+        }
+    });
 };

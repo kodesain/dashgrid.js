@@ -3,21 +3,38 @@
 var dashGrid = function (el) {
     this.grid = $(el);
     this.cols = 4;
-    this.rows = parseFloat(Math.ceil(this.gridItem().length / this.cols));
+    this.rows = parseInt(Math.ceil(this.gridItem().length / this.cols));
     this.nodes = {};
     this.item = {
         width: (100 / this.cols),
         height: 200
     };
+    this.lastMax = null;
 
     this.hintNodes();
     this.mapItems();
 };
 
-dashGrid.prototype.hintNodes = function (row) {
-    var last = (typeof row !== "undefined") ? row : this.rows;
+dashGrid.prototype.hintNodes = function () {
+    var self = this;
+    var lastHeight = 0;
 
-    for (var r = 0; r < (last + 1); r++) {
+    this.gridItem().each(function (i, e) {
+        if (typeof $(e).attr("style") !== "undefined") {
+            var s = self.getStyles(e);
+            var height = parseFloat(s.top) + parseFloat(s.height);
+
+            if (lastHeight <= height) {
+                lastHeight = height;
+            }
+        }
+    });
+
+    if (parseInt(lastHeight / this.item.height) > 0) {
+        this.rows = parseInt(lastHeight / this.item.height);
+    }
+
+    for (var r = 0; r < (this.rows + 1); r++) {
         for (var c = 0; c < this.cols; c++) {
             var top = this.item.height * r;
             var left = this.item.width * c;
@@ -26,8 +43,7 @@ dashGrid.prototype.hintNodes = function (row) {
         }
     }
 
-    this.rows = last;
-    this.gridHeight();
+    this.grid.css({"position": "relative", "height": (this.item.height * (this.rows + 1)) + "px"});
 
     return this.nodes;
 };
@@ -38,10 +54,6 @@ dashGrid.prototype.gridItem = function (attr) {
 
 dashGrid.prototype.gridHint = function (attr) {
     return $("#" + this.grid.get(0).id + " > .dash-grid-hint" + (typeof attr !== "undefined" ? attr : ""));
-};
-
-dashGrid.prototype.gridHeight = function () {
-    this.grid.css({"position": "relative", "height": (this.item.height * (this.rows + 1)) + "px"});
 };
 
 dashGrid.prototype.mapItems = function () {
@@ -113,6 +125,24 @@ dashGrid.prototype.getAttributes = function (el) {
     }
 
     return attr;
+};
+
+dashGrid.prototype.getItems = function () {
+    var self = this;
+    var item = [];
+
+    this.gridItem().each(function (i, e) {
+        var attr = self.getAttributes(e);
+
+        item.push({
+            "id": attr["data-id"],
+            "mode": (typeof attr["data-mode"] !== "undefined") ? attr["data-mode"] : "min",
+            "row": parseInt(attr["data-row"]),
+            "col": parseInt(attr["data-col"])
+        });
+    });
+
+    return item;
 };
 
 dashGrid.prototype.draggable = function () {
@@ -196,11 +226,8 @@ dashGrid.prototype.draggable = function () {
                 }
             }
 
-            if (hintRow === self.rows) {
-                self.hintNodes(hintRow + 1);
-            }
-
             self.collision(drag);
+            self.hintNodes();
             self.gridHint().removeAttr("style");
 
             $(".dash-grid-item.drag").hide();
@@ -211,6 +238,7 @@ dashGrid.prototype.draggable = function () {
         var el = $(e.currentTarget).parent().get(0);
 
         self.resizable(el);
+        self.hintNodes();
     });
 };
 
@@ -219,6 +247,13 @@ dashGrid.prototype.resizable = function (el) {
     var style = this.getStyles(el);
     var attr = this.getAttributes(el);
     var mode = (typeof attr["data-mode"] !== "undefined") ? attr["data-mode"] : "min";
+
+    if (attr["data-id"] != this.lastMax) {
+        this.gridItem().each(function (i, e) {
+            $(e).removeAttr("data-x-row");
+            $(e).removeAttr("data-x-col");
+        });
+    }
 
     if (mode == "min") {
         mode = "max";
@@ -231,6 +266,12 @@ dashGrid.prototype.resizable = function (el) {
 
             style.left = this.item.width * (this.cols - 2) + "%";
         }
+
+        this.gridItem().each(function (i, e) {
+            $(e).removeAttr("data-x-row");
+        });
+
+        this.lastMax = attr["data-id"];
     } else {
         mode = "min";
         style.width = (parseFloat(style.width) / 2) + "%";
@@ -242,11 +283,7 @@ dashGrid.prototype.resizable = function (el) {
 
             style.left = this.item.width * (this.cols - 1) + "%";
         }
-    }
 
-    $(el).attr("data-mode", mode).css(style);
-
-    if (mode == "min") {
         this.gridItem().each(function (i, e) {
             var x = $(e).attr("data-x-row");
             var s = self.getStyles(e);
@@ -258,11 +295,9 @@ dashGrid.prototype.resizable = function (el) {
                 $(e).removeAttr("data-x-row");
             }
         });
-    } else {
-        this.gridItem().each(function (i, e) {
-            $(e).removeAttr("data-x-row");
-        });
     }
+
+    $(el).attr("data-mode", mode).css(style);
 
     this.collision(el);
 };
@@ -300,10 +335,6 @@ dashGrid.prototype.collision = function (el) {
                             }
 
                             ee.push($(e));
-
-                            if (row === self.rows) {
-                                self.hintNodes(row + 1);
-                            }
                         }
                     }
 
@@ -321,10 +352,6 @@ dashGrid.prototype.collision = function (el) {
                                 }
 
                                 ee.push($(e));
-
-                                if (row === self.rows) {
-                                    self.hintNodes(row + 1);
-                                }
                             }
                         }
                     }
@@ -343,10 +370,6 @@ dashGrid.prototype.collision = function (el) {
                                 }
 
                                 ee.push($(e));
-
-                                if (row === self.rows) {
-                                    self.hintNodes(row + 1);
-                                }
                             }
                         }
                     }
@@ -365,10 +388,6 @@ dashGrid.prototype.collision = function (el) {
                                 }
 
                                 ee.push($(e));
-
-                                if (row === self.rows) {
-                                    self.hintNodes(row + 1);
-                                }
                             }
                         }
                     }

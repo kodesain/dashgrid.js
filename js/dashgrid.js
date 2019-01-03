@@ -17,19 +17,23 @@ var dashGrid = function (el, opts) {
     };
     this.lastMax = null;
 
+    this.gridHint().remove();
     this.hintNodes();
     this.mapItems();
     this.draggable(function (e) {
-        opts[e.type]({
-            item: e.item,
-            other: self.gridItem()
-        });
+        if (typeof opts[e.type] !== "undefined") {
+            opts[e.type]({
+                item: e.item,
+                itemList: self.gridItem()
+            });
+        }
     });
 };
 
 dashGrid.prototype.hintNodes = function () {
     var self = this;
     var lastHeight = 0;
+    var lastRow = 0;
 
     this.gridItem().each(function (i, e) {
         if (typeof $(e).attr("style") !== "undefined") {
@@ -39,11 +43,22 @@ dashGrid.prototype.hintNodes = function () {
             if (lastHeight <= height) {
                 lastHeight = height;
             }
+        } else {
+            var row = $(e).attr("data-row");
+            if (typeof row !== "undefined") {
+                if (lastRow <= parseInt(row)) {
+                    lastRow = parseInt(row);
+                }
+            }
         }
     });
 
     if (parseInt(lastHeight / this.item.height) > 0) {
         this.rows = parseInt(lastHeight / this.item.height);
+    }
+
+    if (parseInt(lastRow) > this.rows) {
+        this.rows = parseInt(lastRow);
     }
 
     for (var r = 0; r < (this.rows + 1); r++) {
@@ -78,7 +93,7 @@ dashGrid.prototype.mapItems = function () {
         if (typeof data.row === "undefined" || typeof data.col === "undefined") {
             exist.push(data.id);
         } else {
-            self.gridItem("[data-id='" + data.id + "']").css(self.nodes[data.row + "," + data.col]);
+            self.gridItem("[data-id='" + data.id + "']").attr("data-row", data.row).attr("data-col", data.col).css(self.nodes[data.row + "," + data.col]);
         }
     });
 
@@ -157,6 +172,10 @@ dashGrid.prototype.dataItems = function () {
 
 dashGrid.prototype.draggable = function (callback) {
     var self = this;
+
+    if (this.grid.data("kendoDraggable")) {
+        this.grid.data("kendoDraggable").destroy();
+    }
 
     this.grid.kendoDraggable({
         filter: ".dash-grid-item",
@@ -452,6 +471,52 @@ dashGrid.prototype.checkStack = function (el) {
 };
 
 $.fn.dashGrid = function (opts) {
+    this.items = function () {
+        var nodes = [];
+
+        $.each(this[0].children, function (_, item) {
+            var attr = {};
+
+            $.each($(item)[0].attributes, function (_, attribute) {
+                attr[attribute.name] = attribute.value;
+            });
+
+            attr["class"] = undefined;
+            attr["style"] = undefined;
+            attr["data-x-row"] = undefined;
+            attr["data-x-col"] = undefined;
+            attr = JSON.parse(JSON.stringify(attr));
+
+            if (typeof attr["data-id"] !== "undefined") {
+                nodes.push(attr);
+            }
+        });
+
+        return nodes;
+    };
+
+    this.destroy = function () {
+        $(this).unbind();
+        $(this).removeData("dashGrid");
+        $(this).removeAttr("style");
+        $(this).removeAttr("data-role");
+
+        $.each(this[0].children, function (_, item) {
+            $(item).removeAttr("style");
+            $(item).removeAttr("data-row");
+            $(item).removeAttr("data-col");
+            $(item).removeAttr("data-x-row");
+            $(item).removeAttr("data-x-col");
+            $(item).removeAttr("data-mode");
+
+            $(item).removeData("row");
+            $(item).removeData("col");
+            $(item).removeData("x-row");
+            $(item).removeData("x-col");
+            $(item).removeData("mode");
+        });
+    };
+
     return this.each(function () {
         if (!$(this).data("dashGrid")) {
             $(this).data("dashGrid", new dashGrid(this, opts));

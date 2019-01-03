@@ -53,18 +53,52 @@
         <script src="https://kendo.cdn.telerik.com/2018.3.1017/js/kendo.timezones.min.js"></script>
         <script src="js/dashgrid.js"></script>
         <script type="text/javascript">
+            var DG;
+
             $(document).ready(function () {
-                $("#dashGrid").dashGrid({
+                var items = JSON.parse(sessionStorage.getItem("gridItem"));
+
+                if (items != null) {
+                    $.each(items, function (_, attribute) {
+                        $("div[data-id='" + attribute["data-id"] + "']").attr(attribute)
+                    });
+                }
+
+                DG = $("#dashGrid").dashGrid({
                     cols: 3,
                     height: 300,
                     drag: function (e) {
-                        console.log(e);
+                        sessionStorage.setItem("gridItem", JSON.stringify(DG.items()));
                     },
                     resize: function (e) {
-                        console.log(e);
+                        sessionStorage.setItem("gridItem", JSON.stringify(DG.items()));
                     }
                 });
             });
+
+            function example1() {
+                DG.destroy();
+                DG = $("#dashGrid").dashGrid({
+                    cols: 4,
+                    height: 200
+                });
+            }
+
+            function example2() {
+                DG.destroy();
+                DG = $("#dashGrid").dashGrid({
+                    cols: 6,
+                    height: 100
+                });
+            }
+
+            function example3() {
+                DG.destroy();
+                DG = $("#dashGrid").dashGrid({
+                    cols: 3,
+                    height: 300
+                });
+            }
         </script>
     </head>
 
@@ -75,12 +109,17 @@
                 <p class="lead">jQuery - Kendo Drag & Drop Grid Layout Plugins</p>
                 <h3>Built with love.</h3>
                 <p>http://kodesain.com</p>
+                <p>
+                    <a href="javascript:void(0)" onclick="example1()">example 1</a> |
+                    <a href="javascript:void(0)" onclick="example2()">example 2</a> |
+                    <a href="javascript:void(0)" onclick="example3()">example 3</a>
+                </p>
             </div>
             <div id="dashGrid">
                 <div class="dash-grid-item" data-id="A" data-row="1" data-col="1">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">A</h1>
+                            <h1>A</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -91,7 +130,7 @@
                 <div class="dash-grid-item" data-id="B">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">B</h1>
+                            <h1>B</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -102,7 +141,7 @@
                 <div class="dash-grid-item" data-id="C">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">C</h1>
+                            <h1>C</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -113,7 +152,7 @@
                 <div class="dash-grid-item" data-id="D">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">D</h1>
+                            <h1>D</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -124,7 +163,7 @@
                 <div class="dash-grid-item" data-id="E">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">E</h1>
+                            <h1>E</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -135,7 +174,7 @@
                 <div class="dash-grid-item" data-id="F">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">F</h1>
+                            <h1>F</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -146,7 +185,7 @@
                 <div class="dash-grid-item" data-id="G">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">G</h1>
+                            <h1>G</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -157,7 +196,7 @@
                 <div class="dash-grid-item" data-id="H">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">H</h1>
+                            <h1>H</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -168,7 +207,7 @@
                 <div class="dash-grid-item" data-id="I">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">I</h1>
+                            <h1>I</h1>
                         </div>
                     </div>
                     <div class="resize">
@@ -179,7 +218,7 @@
                 <div class="dash-grid-item" data-id="J">
                     <div class="card">
                         <div class="card-body text-dark">
-                            <h1 class="p-5">J</h1>
+                            <h1>J</h1>
                         </div>
                     </div>
                     <div class="resize">

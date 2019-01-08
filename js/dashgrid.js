@@ -93,7 +93,14 @@ dashGrid.prototype.mapItems = function () {
         if (typeof data.row === "undefined" || typeof data.col === "undefined") {
             exist.push(data.id);
         } else {
-            self.gridItem("[data-id='" + data.id + "']").attr("data-row", data.row).attr("data-col", data.col).css(self.nodes[data.row + "," + data.col]);
+            var node = self.nodes[data.row + "," + data.col];
+
+            if (data.mode == "max") {
+                node.width = (self.item.width * 2) + "%";
+                node.height = (self.item.height * 2) + "px";
+            }
+
+            self.gridItem("[data-id='" + data.id + "']").attr("data-row", data.row).attr("data-col", data.col).css(node);
         }
     });
 
